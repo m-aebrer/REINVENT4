@@ -16,7 +16,7 @@ class Parameters:
     std_dev: float  # the standard deviation of the Gaussian distribution
 
 
-class GaussianNormalization(Transform, param_cls=Parameters):
+class gaussian_normalization(Transform, param_cls=Parameters):
     def __init__(self, params: Parameters):
         super().__init__(params)
         self.center = params.center

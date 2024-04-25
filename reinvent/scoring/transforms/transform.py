@@ -13,6 +13,8 @@ registry = {}
 
 def get_transform(name):
     clean_name = name.lower().replace("_", "")
+    print(clean_name)
+    print(registry)
     return registry[clean_name]
 
 
