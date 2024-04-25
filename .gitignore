@@ -25,3 +25,4 @@ mprofile_*.dat
 # Notebooks
 .ipynb_checkpoints/
 *.ipynb
+priors/pubchem_ecfp4_with_count_with_rank_reinvent4_dict_voc.prior
