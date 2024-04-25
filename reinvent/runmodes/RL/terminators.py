@@ -49,7 +49,7 @@ class SimpleTerminator:
         return False
 
 
-MAX_GRAD = 0.001  # FIXME: arbitray
+MAX_GRAD = 0.1  # FIXME: arbitray
 
 
 class PlateauTerminator:
