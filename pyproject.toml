@@ -39,9 +39,7 @@ dynamic = ["version"]
 
 # We go quite defensive and add upper bounds,
 # in case major version updates break backward compatibility.
-dependencies = [
-  "OpenEye-toolkits",  # Requires --extra-index-url=https://pypi.anaconda.org/OpenEye/simple
-]
+dependencies = []
 
 [project.scripts]
 reinvent = "reinvent.Reinvent:main"
