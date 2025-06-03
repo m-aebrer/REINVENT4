@@ -263,7 +263,7 @@ def main():
 
     actual_device = set_torch_device(args.device, device)
 
-    if actual_device.type == "cuda":
+    if actual_device.type == "cuda" and torch.cuda.is_available():
         current_device = torch.cuda.current_device()
         device_name = torch.cuda.get_device_name(current_device)
         logger.info(f"Using CUDA device:{current_device} {device_name}")
@@ -271,8 +271,13 @@ def main():
         free_memory, total_memory = torch.cuda.mem_get_info()
         logger.info(f"GPU memory: {free_memory // 1024**2} MiB free, "
                     f"{total_memory // 1024**2} MiB total")
+    elif actual_device.type == "cuda" and not torch.cuda.is_available():
+        logger.warning("CUDA device requested but CUDA not available, falling back to CPU")
+        actual_device = torch.device('cpu')  # Override the device
+        logger.info(f"Using CPU {platform.processor()}")
     else:
         logger.info(f"Using CPU {platform.processor()}")
+
 
     seed = input_config.get("seed", None)
 
