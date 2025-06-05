@@ -14,29 +14,16 @@ class RNN(tnn.Module):
     """
 
     def __init__(
-            self,
-            voc_size: int,
-            layer_size: int = 512,
-            num_layers: int = 3,
-            cell_type: str = "gru",
-            embedding_layer_size: int = 256,
-            dropout: float = 0.0,
-            layer_normalization: bool = False,
+        self,
+        voc_size: int,
+        layer_size: int = 512,
+        num_layers: int = 3,
+        cell_type: str = "gru",
+        embedding_layer_size: int = 256,
+        dropout: float = 0.0,
+        layer_normalization: bool = False,
+        device: torch.device = torch.device("cpu"),  # NEW DEVICE PARAM
     ) -> None:
-        """
-        Implements an N layer GRU|LSTM cell including an embedding layer and an output linear layer back
-        to the size of the vocabulary.
-
-        :param voc_size: Size of the vocabulary.
-        :param layer_size: Size of each of the RNN layers.
-        :param num_layers: Number of RNN layers.
-        :param cell_type: Type of RNN: either gru or lstm.
-        :param embedding_layer_size: Size of the embedding layer.
-        :param dropout: Dropout probability.
-        :param layer_normalization: Selects whether layer should be normalized or not.
-        :raises ValueError: raised if cell_type is unknown
-        """
-
         super(RNN, self).__init__()
 
         self._layer_size = layer_size
@@ -45,36 +32,39 @@ class RNN(tnn.Module):
         self._cell_type = cell_type.lower()
         self._dropout = dropout
         self._layer_normalization = layer_normalization
+        self._device = device  # NEW: STORE DEVICE
 
-        self._embedding = tnn.Embedding(voc_size, self._embedding_layer_size)
+        # NEW: CREATE COMPONENTS ON TARGET DEVICE
+        with torch.device(self._device):
+            self._embedding = tnn.Embedding(voc_size, self._embedding_layer_size)
 
-        self._rnn: tnn.RNNBase  # base class of GRU and LSTM
+            if self._cell_type == "gru":
+                self._rnn = tnn.GRU(
+                    self._embedding_layer_size,
+                    self._layer_size,
+                    num_layers=self._num_layers,
+                    dropout=self._dropout,
+                    batch_first=True,
+                    device=self._device,  # NEW: PASS DEVICE
+                )
+            elif self._cell_type == "lstm":
+                self._rnn = tnn.LSTM(
+                    self._embedding_layer_size,
+                    self._layer_size,
+                    num_layers=self._num_layers,
+                    dropout=self._dropout,
+                    batch_first=True,
+                    device=self._device,  # NEW: PASS DEVICE
+                )
+            else:
+                raise ValueError('cell_type should be "gru" or "lstm"')
 
-        if self._cell_type == "gru":
-            self._rnn = tnn.GRU(
-                self._embedding_layer_size,
-                self._layer_size,
-                num_layers=self._num_layers,
-                dropout=self._dropout,
-                batch_first=True,
-            )
-        elif self._cell_type == "lstm":
-            self._rnn = tnn.LSTM(
-                self._embedding_layer_size,
-                self._layer_size,
-                num_layers=self._num_layers,
-                dropout=self._dropout,
-                batch_first=True,
-            )
-        else:
-            raise ValueError('Value of the parameter cell_type should be "gru" or "lstm"')
-
-        self._linear = tnn.Linear(self._layer_size, voc_size)
+            self._linear = tnn.Linear(self._layer_size, voc_size, device=self._device)  # NEW DEVICE
 
     def forward(
-            self,
-            input_vector: torch.Tensor,
-            hidden_state: torch.Tensor | Sequence[torch.Tensor] = None,
+        self,
+        input_vector: torch.Tensor,
+        hidden_state: torch.Tensor | Sequence[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Performs a forward pass on the model. Note: you pass the **whole** sequence.

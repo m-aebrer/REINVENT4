@@ -58,6 +58,9 @@ class Model:
         if not isinstance(network_params, dict):
             network_params = {}
 
+        # NEW: ADD DEVICE TO NETWORK PARAMS
+        network_params["device"] = device  
+
         self._model_modes = ModelModeEnum()
         self.network = rnn.RNN(len(self.vocabulary), **network_params)
         self.network.to(device)
