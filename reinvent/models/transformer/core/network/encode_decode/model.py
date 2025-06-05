@@ -1,7 +1,7 @@
 import copy
 
 import torch.nn as nn
-
+import torch
 from reinvent.models.transformer.core.network.encode_decode.decoder import Decoder
 from reinvent.models.transformer.core.network.encode_decode.decoder_layer import DecoderLayer
 from reinvent.models.transformer.core.network.encode_decode.encoder import Encoder
@@ -20,10 +20,6 @@ from reinvent.models.transformer.core.network.module.positionwise_feedforward im
 
 
 class EncoderDecoder(nn.Module):
-    """
-    A standard Encoder-Decoder architecture.
-    """
-
     def __init__(
         self,
         vocabulary_size,
@@ -32,6 +28,7 @@ class EncoderDecoder(nn.Module):
         model_dimension=256,
         feedforward_dimension=2048,
         dropout=0.1,
+        device=None,  # ADD THIS
     ):
         super(EncoderDecoder, self).__init__()
 
@@ -43,23 +40,46 @@ class EncoderDecoder(nn.Module):
         self.dropout = dropout
 
         c = copy.deepcopy
-        attn = MultiHeadedAttention(num_heads, model_dimension)
-        ff = PositionwiseFeedForward(model_dimension, feedforward_dimension, dropout)
-        position = PositionalEncoding(model_dimension, dropout)
 
-        self.encoder = Encoder(
-            EncoderLayer(model_dimension, c(attn), c(ff), dropout), num_layers
-        )
-        self.decoder = Decoder(
-            DecoderLayer(model_dimension, c(attn), c(attn), c(ff), dropout), num_layers
-        )
-        self.src_embed = nn.Sequential(
-            Embeddings(model_dimension, vocabulary_size), c(position)
-        )
-        self.tgt_embed = nn.Sequential(
-            Embeddings(model_dimension, vocabulary_size), c(position)
-        )
-        self.generator = Generator(model_dimension, vocabulary_size)
+        # Create components with device context if provided
+        if device is not None:
+            with torch.device(device):
+                attn = MultiHeadedAttention(num_heads, model_dimension)
+                ff = PositionwiseFeedForward(model_dimension, feedforward_dimension, dropout)
+                position = PositionalEncoding(model_dimension, dropout)
+
+                self.encoder = Encoder(
+                    EncoderLayer(model_dimension, c(attn), c(ff), dropout), num_layers
+                )
+                self.decoder = Decoder(
+                    DecoderLayer(model_dimension, c(attn), c(attn), c(ff), dropout), num_layers
+                )
+                self.src_embed = nn.Sequential(
+                    Embeddings(model_dimension, vocabulary_size), c(position)
+                )
+                self.tgt_embed = nn.Sequential(
+                    Embeddings(model_dimension, vocabulary_size), c(position)
+                )
+                self.generator = Generator(model_dimension, vocabulary_size)
+        else:
+            # Original code unchanged
+            attn = MultiHeadedAttention(num_heads, model_dimension)
+            ff = PositionwiseFeedForward(model_dimension, feedforward_dimension, dropout)
+            position = PositionalEncoding(model_dimension, dropout)
+
+            self.encoder = Encoder(
+                EncoderLayer(model_dimension, c(attn), c(ff), dropout), num_layers
+            )
+            self.decoder = Decoder(
+                DecoderLayer(model_dimension, c(attn), c(attn), c(ff), dropout), num_layers
+            )
+            self.src_embed = nn.Sequential(
+                Embeddings(model_dimension, vocabulary_size), c(position)
+            )
+            self.tgt_embed = nn.Sequential(
+                Embeddings(model_dimension, vocabulary_size), c(position)
+            )
+            self.generator = Generator(model_dimension, vocabulary_size)
 
         self._init_params()
 

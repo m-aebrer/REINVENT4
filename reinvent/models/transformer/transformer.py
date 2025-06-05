@@ -84,7 +84,10 @@ class TransformerModel(ABC):
         if model_type and model_type != cls._model_type:
             raise RuntimeError(f"Wrong type: {model_type} but expected {cls._model_type}")
 
-        network = EncoderDecoder(**save_dict["network_parameter"])
+        # Add device to network parameters
+        network_params = save_dict["network_parameter"].copy()
+        network_params["device"] = device
+        network = EncoderDecoder(**network_params)
         network.load_state_dict(save_dict["network_state"])
 
         vocabulary = None
@@ -92,7 +95,7 @@ class TransformerModel(ABC):
             vocabulary = Vocabulary.load_from_dictionary(save_dict["vocabulary"])
         else:
             vocabulary = save_dict["vocabulary"]
- 
+
         model = cls(
             vocabulary=vocabulary,
             network=network,

@@ -59,7 +59,7 @@ class Model:
             network_params = {}
 
         # NEW: ADD DEVICE TO NETWORK PARAMS
-        network_params["device"] = device  
+        network_params["device"] = device
 
         self._model_modes = ModelModeEnum()
         self.network = rnn.RNN(len(self.vocabulary), **network_params)
@@ -202,17 +202,20 @@ class Model:
         return seqs, smiles, likelihoods
 
     def _sample(self, batch_size: int = 128) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Sample a number of sequences from the RNN
-
-        :param batch_size: batch size which is the number of sequences to sample
-        :returns: sequences (2D) and associated NLLs (1D)
-        """
-
-        # NOTE: the first token never gets added in the loop so initialize with the start token
-        sequences = [torch.full((batch_size, 1), self.vocabulary[mv.START_TOKEN], dtype=torch.long)]
-        input_vector = torch.full((batch_size,), self.vocabulary[mv.START_TOKEN], dtype=torch.long)
+        # Just add device= to the tensor creations
+        sequences = [
+            torch.full(
+                (batch_size, 1),
+                self.vocabulary[mv.START_TOKEN],
+                dtype=torch.long,
+                device=self.device,
+            )
+        ]
+        input_vector = torch.full(
+            (batch_size,), self.vocabulary[mv.START_TOKEN], dtype=torch.long, device=self.device
+        )
         hidden_state = None
-        nlls = torch.zeros(batch_size)
+        nlls = torch.zeros(batch_size, device=self.device)
 
         for _ in range(self.max_sequence_length - 1):
             logits, hidden_state = self.network(input_vector.unsqueeze(1), hidden_state)
